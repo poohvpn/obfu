@@ -21,8 +21,8 @@ func (x *randXOR) ObfuscatePacketConn(conn net.PacketConn) net.PacketConn {
 
 func (x *randXOR) ObfuscateStreamConn(conn net.Conn) net.Conn {
 	return &streamConn{
-		Conn: conn,
-		lIV:  genIV(),
+		Conn:    conn,
+		localIV: genIV(),
 	}
 }
 
@@ -34,41 +34,41 @@ func (x *randXOR) ObfuscateDatagramConn(conn net.Conn) net.Conn {
 
 type streamConn struct {
 	net.Conn
-	lIVdone   bool
-	lIV       []byte
-	lIVOffset int
-	rIVdone   bool
-	rIV       []byte
-	rIVOffset int
+	localIVDone    bool
+	localIV        []byte
+	localIVOffset  int
+	remoteIVDone   bool
+	remoteIV       []byte
+	remoteIVOffset int
 }
 
 func (c *streamConn) Read(b []byte) (int, error) {
-	if !c.rIVdone {
-		c.rIV = make([]byte, len(c.lIV))
-		_, err := io.ReadFull(c.Conn, c.rIV)
+	if !c.remoteIVDone {
+		c.remoteIV = make([]byte, len(c.localIV))
+		_, err := io.ReadFull(c.Conn, c.remoteIV)
 		if err != nil {
 			return 0, err
 		}
-		c.rIVdone = true
+		c.remoteIVDone = true
 	}
 	n, err := c.Conn.Read(b)
 	if err != nil {
 		return 0, err
 	}
-	c.rIVOffset = infXorBytes(c.rIV, b[:n], c.rIVOffset)
+	c.remoteIVOffset = infXorBytes(c.remoteIV, b[:n], c.remoteIVOffset)
 	return n, nil
 }
 
 func (c *streamConn) Write(b []byte) (int, error) {
-	if !c.lIVdone {
-		_, err := c.Conn.Write(c.lIV)
+	if !c.localIVDone {
+		_, err := c.Conn.Write(c.localIV)
 		if err != nil {
 			return 0, err
 		}
-		c.lIVdone = true
+		c.localIVDone = true
 	}
 	data := duplicate(b)
-	c.lIVOffset = infXorBytes(c.lIV, data, c.lIVOffset)
+	c.localIVOffset = infXorBytes(c.localIV, data, c.localIVOffset)
 	return c.Conn.Write(data)
 }
 
