@@ -7,26 +7,24 @@ import (
 
 const ivSize = 4
 
-var RandXOR Obfuscator = &randXOR{}
+var RandXOR Obfuscator = randXOR{}
 
 type randXOR struct{}
 
-var _ Obfuscator = &randXOR{}
-
-func (x *randXOR) ObfuscatePacketConn(conn net.PacketConn) net.PacketConn {
+func (randXOR) ObfuscatePacketConn(conn net.PacketConn) net.PacketConn {
 	return &packetConn{
 		PacketConn: conn,
 	}
 }
 
-func (x *randXOR) ObfuscateStreamConn(conn net.Conn) net.Conn {
+func (randXOR) ObfuscateStreamConn(conn net.Conn) net.Conn {
 	return &streamConn{
 		Conn:    conn,
 		localIV: genIV(),
 	}
 }
 
-func (x *randXOR) ObfuscateDatagramConn(conn net.Conn) net.Conn {
+func (randXOR) ObfuscateDatagramConn(conn net.Conn) net.Conn {
 	return &datagramConn{
 		Conn: conn,
 	}
