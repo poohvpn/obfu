@@ -1,4 +1,4 @@
-module github.com/poohvpn/obfu2
+module github.com/poohvpn/obfu
 
 go 1.17
 
